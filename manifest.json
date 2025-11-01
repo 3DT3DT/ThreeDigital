@@ -53,19 +53,5 @@
   "scope": "/",
   "theme_color": "#764ba2",
   "orientation": "portrait-primary",
-  "categories": ["household", "productivity", "utilities"],
-  "screenshots": [
-    {
-      "src": "screenshots/mobile-screenshot.png",
-      "sizes": "375x667",
-      "type": "image/png",
-      "form_factor": "narrow"
-    },
-    {
-      "src": "screenshots/desktop-screenshot.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
-    }
-  ]
+  "categories": ["household", "productivity", "utilities"]
 }

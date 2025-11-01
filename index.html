@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>3 Digital Smart System</title>
+    <title>Smart 3 Digital System</title>
     
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="manifest.json">
@@ -13,12 +13,6 @@
     <meta name="apple-mobile-web-app-title" content="3Digital">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="application-name" content="3Digital">
-    <meta name="description" content="3 Digital Smart System - Control your home devices">
-    <meta name="keywords" content="smart home, iot, home automation">
-    
-    <!-- Icons for PWA -->
-    <link rel="icon" href="icons/icon-192x192.png" type="image/png">
-    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
     
     <style>
         * {
@@ -36,10 +30,10 @@
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
         body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             min-height: 100vh;
             padding: 20px;
@@ -54,6 +48,8 @@
             height: 100%;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
+            padding-bottom: 5px;
         }
 
         .header {
@@ -68,32 +64,6 @@
         .header h1 {
             font-size: 2em;
             margin-bottom: 5px;
-        }
-
-        /* Install Prompt */
-        .install-prompt {
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 15px;
-            padding: 15px;
-            margin: 10px 0;
-            text-align: center;
-            backdrop-filter: blur(10px);
-            display: none;
-        }
-
-        .install-btn {
-            background: rgba(255, 255, 255, 0.3);
-            border: none;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 20px;
-            cursor: pointer;
-            margin: 5px;
-            font-weight: bold;
-        }
-
-        .install-btn:hover {
-            background: rgba(255, 255, 255, 0.4);
         }
 
         /* Areas Tabs */
@@ -141,6 +111,7 @@
             flex: 1;
             overflow-y: auto;
             padding: 10px 0;
+            -webkit-overflow-scrolling: touch;
         }
 
         .controls-grid {
@@ -202,12 +173,17 @@
             font-weight: bold;
         }
 
+        /* FIXED: Connection Status - Mobile Optimized */
         .connection-status {
             text-align: center;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.1);
+            padding: 12px 8px;
+            background: rgba(255, 193, 7, 0.3);
             border-radius: 10px;
             margin-top: 10px;
+            font-size: 14px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            min-height: auto;
         }
 
         .loading {
@@ -251,11 +227,25 @@
                 padding: 8px 12px;
                 font-size: 12px;
             }
+            
+            /* FIXED: Mobile connection status */
+            .connection-status {
+                font-size: 12px;
+                padding: 10px 6px;
+                margin: 8px 0;
+                line-height: 1.3;
+            }
         }
 
         @media (max-width: 480px) {
             .controls-grid {
                 grid-template-columns: repeat(2, 1fr);
+            }
+            
+            /* FIXED: Small mobile connection status */
+            .connection-status {
+                font-size: 11px;
+                padding: 8px 5px;
             }
         }
 
@@ -274,36 +264,30 @@
             border-radius: 3px;
         }
 
-        /* Offline Indicator */
-        .offline-indicator {
+        /* NEW: Temporary demo test button */
+        .demo-toggle {
             position: fixed;
             top: 10px;
-            right: 10px;
-            background: #f44336;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
             color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
+            padding: 8px 12px;
+            border-radius: 10px;
             font-size: 12px;
             z-index: 1000;
-            display: none;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <!-- Offline Indicator -->
-    <div class="offline-indicator" id="offline-indicator">📴 Offline</div>
+    <!-- NEW: Temporary button to test demo mode -->
+    <button class="demo-toggle" onclick="forceDemoMode()">Test Demo</button>
 
     <div class="container">
         <div class="header">
-            <h1>🏠 3 Digital Smart System</h1>
+            <h1>🏠 Smart 3 Digital System</h1>
             <p>Control your home devices</p>
-        </div>
-
-        <!-- Install Prompt -->
-        <div class="install-prompt" id="install-prompt">
-            <p>📱 Install 3 Digital for better experience</p>
-            <button class="install-btn" id="install-btn">Install App</button>
-            <button class="install-btn" id="dismiss-btn">Not Now</button>
         </div>
 
         <!-- Areas Tabs -->
@@ -323,6 +307,7 @@
             </div>
         </div>
 
+        <!-- FIXED: Connection Status with better mobile display -->
         <div class="connection-status" id="connection-status">
             🔄 Connecting to system...
         </div>
@@ -337,13 +322,10 @@
                 this.areas = [];
                 this.currentArea = 'all';
                 this.isConnected = false;
-                this.deferredPrompt = null;
+                this.demoModeActive = true; // NEW: Force demo mode for testing
             }
 
             async init() {
-                this.setupPWA();
-                this.setupOfflineDetection();
-                
                 try {
                     await this.loadDevices();
                     this.setupAreas();
@@ -356,86 +338,15 @@
                 }
             }
 
-            setupPWA() {
-                // Service Worker Registration
-                if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.register('/sw.js')
-                        .then(registration => {
-                            console.log('SW registered: ', registration);
-                            registration.update(); // Force update check
-                        })
-                        .catch(error => {
-                            console.log('SW registration failed: ', error);
-                        });
-                }
-
-                // Install Prompt
-                window.addEventListener('beforeinstallprompt', (e) => {
-                    e.preventDefault();
-                    this.deferredPrompt = e;
-                    this.showInstallPrompt();
-                });
-
-                // Track app installed
-                window.addEventListener('appinstalled', () => {
-                    console.log('PWA installed');
-                    this.hideInstallPrompt();
-                });
-
-                // Install button handler
-                document.getElementById('install-btn').addEventListener('click', () => {
-                    this.installPWA();
-                });
-
-                // Dismiss button handler
-                document.getElementById('dismiss-btn').addEventListener('click', () => {
-                    this.hideInstallPrompt();
-                });
-            }
-
-            setupOfflineDetection() {
-                window.addEventListener('online', () => {
-                    document.getElementById('offline-indicator').style.display = 'none';
-                    this.loadDevices();
-                });
-
-                window.addEventListener('offline', () => {
-                    document.getElementById('offline-indicator').style.display = 'block';
-                    this.showError('Connection lost - Offline mode');
-                });
-            }
-
-            showInstallPrompt() {
-                const prompt = document.getElementById('install-prompt');
-                prompt.style.display = 'block';
-                
-                // Auto hide after 10 seconds
-                setTimeout(() => {
-                    this.hideInstallPrompt();
-                }, 10000);
-            }
-
-            hideInstallPrompt() {
-                const prompt = document.getElementById('install-prompt');
-                prompt.style.display = 'none';
-            }
-
-            async installPWA() {
-                if (this.deferredPrompt) {
-                    this.deferredPrompt.prompt();
-                    const { outcome } = await this.deferredPrompt.userChoice;
-                    
-                    if (outcome === 'accepted') {
-                        console.log('User accepted install');
-                    }
-                    
-                    this.deferredPrompt = null;
-                    this.hideInstallPrompt();
-                }
-            }
-
             async loadDevices() {
                 try {
+                    // NEW: Force demo mode for testing - Remove this in production
+                    this.demoModeActive = true;
+                    
+                    if (this.demoModeActive) {
+                        throw new Error('Forced demo mode for testing');
+                    }
+
                     // Check if online
                     if (!navigator.onLine) {
                         throw new Error('Offline');
@@ -445,24 +356,27 @@
                     if (realDevices && realDevices.length > 0) {
                         this.devices = realDevices;
                         this.isConnected = true;
+                        this.demoModeActive = false;
                     } else {
-                        this.devices = this.getMockDevices();
-                        this.isConnected = false;
+                        throw new Error('No real devices found');
                     }
                 } catch (error) {
+                    // Always use demo mode for testing
                     this.devices = this.getMockDevices();
                     this.isConnected = false;
+                    this.demoModeActive = true;
+                    console.log('Demo mode activated:', error.message);
                 }
             }
 
             setupAreas() {
                 this.areas = [
-                    { id: 'all', name: 'All Areas', icon: '🏠' },
-                    { id: 'living_room', name: 'Living Room', icon: '🛋️' },
-                    { id: 'bedroom', name: 'Bedroom', icon: '🛏️' },
-                    { id: 'kitchen', name: 'Kitchen', icon: '👨‍🍳' },
-                    { id: 'garage', name: 'Garage', icon: '🚗' },
-                    { id: 'garden', name: 'Garden', icon: '🌳' }
+                    { id: 'all', name: '🏠 All Areas', icon: '🏠' },
+                    { id: 'living_room', name: '🛋️ Living Room', icon: '🛋️' },
+                    { id: 'bedroom', name: '🛏️ Bedroom', icon: '🛏️' },
+                    { id: 'kitchen', name: '👨‍🍳 Kitchen', icon: '👨‍🍳' },
+                    { id: 'garage', name: '🚗 Garage', icon: '🚗' },
+                    { id: 'garden', name: '🌳 Garden', icon: '🌳' }
                 ];
             }
 
@@ -577,12 +491,45 @@
                     devicesGrid.appendChild(deviceCard);
                 });
                 
-                if (this.isConnected) {
-                    connectionStatus.innerHTML = '✅ Connected to 3 Digital';
+                // NEW: IMPROVED CONNECTION STATUS DISPLAY
+                if (this.isConnected && !this.demoModeActive) {
+                    connectionStatus.innerHTML = '✅ Connected to 3 Digital System';
                     connectionStatus.style.background = 'rgba(76, 175, 80, 0.3)';
                 } else {
-                    connectionStatus.innerHTML = '⚠️ Demo Mode - Connect to 3 Digital for real control';
+                    // NEW: Demo mode with better mobile display
+                    connectionStatus.innerHTML = '⚠️ Demo Mode - Tap devices to test';
                     connectionStatus.style.background = 'rgba(255, 193, 7, 0.3)';
+                    
+                    // NEW: Add demo indicator to header on mobile
+                    this.showMobileDemoIndicator();
+                }
+            }
+
+            // NEW: Add mobile-specific demo indicator
+            showMobileDemoIndicator() {
+                // Remove existing indicator if any
+                const existingIndicator = document.getElementById('mobile-demo-indicator');
+                if (existingIndicator) {
+                    existingIndicator.remove();
+                }
+
+                // Add demo indicator to header for mobile
+                if (window.innerWidth <= 768) {
+                    const header = document.querySelector('.header');
+                    const demoIndicator = document.createElement('div');
+                    demoIndicator.id = 'mobile-demo-indicator';
+                    demoIndicator.innerHTML = '🔴 DEMO MODE';
+                    demoIndicator.style.cssText = `
+                        background: rgba(255, 193, 7, 0.8);
+                        color: #333;
+                        padding: 4px 8px;
+                        border-radius: 10px;
+                        font-size: 10px;
+                        font-weight: bold;
+                        margin-top: 5px;
+                        display: inline-block;
+                    `;
+                    header.appendChild(demoIndicator);
                 }
             }
 
@@ -646,7 +593,7 @@
 
             setupAutoRefresh() {
                 setInterval(() => {
-                    if (this.isConnected && navigator.onLine) {
+                    if (this.isConnected) {
                         this.loadDevices().then(() => {
                             this.renderDevices();
                         });
@@ -664,7 +611,7 @@
                         status.innerHTML = '✅ Connected to 3 Digital';
                         status.style.background = 'rgba(76, 175, 80, 0.3)';
                     } else {
-                        status.innerHTML = '⚠️ Demo Mode - Connect to 3 Digital for real control';
+                        status.innerHTML = '⚠️ Demo Mode - Tap devices to test';
                         status.style.background = 'rgba(255, 193, 7, 0.3)';
                     }
                 }, 3000);
@@ -730,6 +677,30 @@
         // Start the application
         document.addEventListener('DOMContentLoaded', function() {
             new SmartHomeApp().init();
+        });
+
+        // NEW: Temporary function to test demo mode
+        function forceDemoMode() {
+            const app = new SmartHomeApp();
+            app.demoModeActive = true;
+            app.init();
+            alert('Demo mode activated for testing!');
+        }
+
+        // PWA Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                    .then(registration => console.log('SW registered'))
+                    .catch(error => console.log('SW error:', error));
+            });
+        }
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
         });
     </script>
 </body>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smart-3digital-v1.2';
+const CACHE_NAME = 'smart-3digital-v1.0';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -42,9 +42,7 @@ self.addEventListener('activate', event => {
 // Fetch event - serve from cache or network
 self.addEventListener('fetch', event => {
   // Skip non-GET requests and Home Assistant API calls
-  if (event.request.method !== 'GET' || 
-      event.request.url.includes('/api/') ||
-      event.request.url.includes('YOUR_HA_IP')) {
+  if (event.request.method !== 'GET') {
     return;
   }
 
@@ -80,58 +78,4 @@ self.addEventListener('fetch', event => {
         }
       })
   );
-});
-
-// Background sync for offline actions
-self.addEventListener('sync', event => {
-  if (event.tag === 'background-sync') {
-    console.log('Background sync triggered');
-    event.waitUntil(doBackgroundSync());
-  }
-});
-
-async function doBackgroundSync() {
-  // Implement background sync logic here
-  // This can retry failed API calls when back online
-  console.log('Performing background sync...');
-}
-
-// Push notifications
-self.addEventListener('push', event => {
-  if (!event.data) return;
-
-  const data = event.data.json();
-  const options = {
-    body: data.body || 'Smart 3 Digital System Notification',
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/icon-72x72.png',
-    vibrate: [100, 50, 100],
-    data: {
-      url: data.url || '/'
-    },
-    actions: [
-      {
-        action: 'open',
-        title: 'Open App'
-      },
-      {
-        action: 'close',
-        title: 'Close'
-      }
-    ]
-  };
-
-  event.waitUntil(
-    self.registration.showNotification(data.title || '3 Digital', options)
-  );
-});
-
-self.addEventListener('notificationclick', event => {
-  event.notification.close();
-
-  if (event.action === 'open') {
-    event.waitUntil(
-      clients.openWindow(event.notification.data.url)
-    );
-  }
 });
