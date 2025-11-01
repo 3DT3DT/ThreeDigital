@@ -5,25 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Smart 3 Digital System</title>
     
-    <!-- PWA Meta Tags - COMPLETE SET -->
-    <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#764ba2">
-    <meta name="msapplication-TileColor" content="#764ba2">
-    
-    <!-- Apple PWA Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="3Digital">
-    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
-    
-    <!-- Android/Windows PWA Tags -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="application-name" content="3Digital">
-    <meta name="msapplication-TileImage" content="icons/icon-144x144.png">
-    
-    <!-- PWA Optimization -->
-    <meta name="format-detection" content="telephone=no">
-    <meta name="msapplication-tap-highlight" content="no">
     
     <style>
         * {
@@ -40,10 +29,7 @@
             overflow: hidden;
             -webkit-touch-callout: none;
             -webkit-user-select: none;
-            -webkit-tap-highlight-color: transparent;
             user-select: none;
-            position: fixed;
-            width: 100%;
         }
 
         body {
@@ -51,6 +37,7 @@
             color: white;
             min-height: 100vh;
             padding: 20px;
+            position: fixed;
             width: 100%;
             height: 100%;
         }
@@ -254,20 +241,368 @@
             background: rgba(255, 255, 255, 0.3);
             border-radius: 3px;
         }
-// Force service worker update
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(function(registrations) {
-    for(let registration of registrations) {
-      registration.unregister();
-    }
-  }).then(function() {
-    navigator.serviceWorker.register('/sw.js', { 
-      scope: '/',
-      updateViaCache: 'none'
-    }).then(function(registration) {
-      console.log('✅ New Service Worker registered');
-    });
-  });
-}
     </style>
 </head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 Smart 3 Digital System</h1>
+            <p>Control your home devices</p>
+        </div>
+
+        <!-- Areas Tabs -->
+        <div class="areas-tabs" id="areas-tabs">
+            <!-- Areas will be added automatically -->
+        </div>
+
+        <!-- Current Area Title -->
+        <div class="area-title" id="area-title">
+            🏠 All Areas
+        </div>
+
+        <!-- Devices Grid -->
+        <div class="devices-container">
+            <div class="controls-grid" id="devices-grid">
+                <div class="loading">🔄 Loading devices...</div>
+            </div>
+        </div>
+
+        <div class="connection-status" id="connection-status">
+            🔄 Connecting to system...
+        </div>
+    </div>
+
+    <script>
+        class SmartHomeApp {
+            constructor() {
+                this.haBaseUrl = 'http://YOUR_HA_IP:8123';
+                this.haToken = 'YOUR_LONG_LIVED_TOKEN';
+                this.devices = [];
+                this.areas = [];
+                this.currentArea = 'all';
+                this.isConnected = false;
+            }
+
+            async init() {
+                try {
+                    await this.loadDevices();
+                    this.setupAreas();
+                    this.renderAreas();
+                    this.renderDevices();
+                    this.setupAutoRefresh();
+                } catch (error) {
+                    console.error('Initialization error:', error);
+                    this.showError('Failed to initialize system');
+                }
+            }
+
+            async loadDevices() {
+                try {
+                    const realDevices = await this.fetchFromHA();
+                    if (realDevices && realDevices.length > 0) {
+                        this.devices = realDevices;
+                        this.isConnected = true;
+                    } else {
+                        this.devices = this.getMockDevices();
+                        this.isConnected = false;
+                    }
+                } catch (error) {
+                    this.devices = this.getMockDevices();
+                }
+            }
+
+            setupAreas() {
+                this.areas = [
+                    { id: 'all', name: '🏠 All Areas', icon: '🏠' },
+                    { id: 'living_room', name: '🛋️ Living Room', icon: '🛋️' },
+                    { id: 'bedroom', name: '🛏️ Bedroom', icon: '🛏️' },
+                    { id: 'kitchen', name: '👨‍🍳 Kitchen', icon: '👨‍🍳' },
+                    { id: 'garage', name: '🚗 Garage', icon: '🚗' },
+                    { id: 'garden', name: '🌳 Garden', icon: '🌳' }
+                ];
+            }
+
+            getMockDevices() {
+                return [
+                    // Living Room
+                    { id: 'light_living_room', name: 'Living Room Light', icon: '💡', type: 'light', state: 'off', entity_id: 'light.living_room', area: 'living_room' },
+                    { id: 'tv_living_room', name: 'TV', icon: '📺', type: 'switch', state: 'off', entity_id: 'switch.tv', area: 'living_room' },
+                    { id: 'curtains_living_room', name: 'Curtains', icon: '🪟', type: 'cover', state: 'closed', entity_id: 'cover.living_room_curtains', area: 'living_room' },
+
+                    // Bedroom
+                    { id: 'light_bedroom', name: 'Bedroom Light', icon: '💡', type: 'light', state: 'on', entity_id: 'light.bedroom', area: 'bedroom' },
+                    { id: 'ac_bedroom', name: 'AC', icon: '❄️', type: 'climate', state: 'off', entity_id: 'climate.bedroom_ac', area: 'bedroom' },
+                    { id: 'curtains_bedroom', name: 'Curtains', icon: '🛏️', type: 'cover', state: 'open', entity_id: 'cover.bedroom_curtains', area: 'bedroom' },
+
+                    // Kitchen
+                    { id: 'light_kitchen', name: 'Kitchen Light', icon: '💡', type: 'light', state: 'off', entity_id: 'light.kitchen', area: 'kitchen' },
+                    { id: 'oven_kitchen', name: 'Oven', icon: '🔥', type: 'switch', state: 'off', entity_id: 'switch.oven', area: 'kitchen' },
+
+                    // Garage
+                    { id: 'garage_door', name: 'Garage Door', icon: '🚗', type: 'cover', state: 'closed', entity_id: 'cover.garage_door', area: 'garage' },
+                    { id: 'light_garage', name: 'Garage Light', icon: '💡', type: 'light', state: 'off', entity_id: 'light.garage', area: 'garage' },
+
+                    // Garden
+                    { id: 'garden_lights', name: 'Garden Lights', icon: '💡', type: 'light', state: 'off', entity_id: 'light.garden', area: 'garden' },
+                    { id: 'sprinkler', name: 'Sprinkler', icon: '💧', type: 'switch', state: 'off', entity_id: 'switch.sprinkler', area: 'garden' }
+                ];
+            }
+
+            renderAreas() {
+                const areasTabs = document.getElementById('areas-tabs');
+                areasTabs.innerHTML = '';
+
+                this.areas.forEach(area => {
+                    const areaTab = document.createElement('button');
+                    areaTab.className = `area-tab ${this.currentArea === area.id ? 'active' : ''}`;
+                    areaTab.innerHTML = area.name;
+                    areaTab.addEventListener('click', () => {
+                        this.switchArea(area.id);
+                    });
+                    
+                    // Mobile touch events
+                    areaTab.addEventListener('touchstart', function(e) {
+                        this.style.transform = 'scale(0.95)';
+                    });
+                    
+                    areaTab.addEventListener('touchend', function(e) {
+                        this.style.transform = 'scale(1)';
+                    });
+                    
+                    areasTabs.appendChild(areaTab);
+                });
+            }
+
+            switchArea(areaId) {
+                this.currentArea = areaId;
+                this.renderAreas();
+                this.renderDevices();
+                
+                const currentArea = this.areas.find(a => a.id === areaId);
+                document.getElementById('area-title').innerHTML = 
+                    `${currentArea.icon} ${currentArea.name}`;
+            }
+
+            renderDevices() {
+                const devicesGrid = document.getElementById('devices-grid');
+                const connectionStatus = document.getElementById('connection-status');
+                
+                let filteredDevices = this.devices;
+                
+                if (this.currentArea !== 'all') {
+                    filteredDevices = this.devices.filter(device => 
+                        device.area === this.currentArea
+                    );
+                }
+
+                if (filteredDevices.length === 0) {
+                    devicesGrid.innerHTML = `
+                        <div class="loading" style="grid-column: 1 / -1;">
+                            ⚠️ No devices in this area
+                        </div>
+                    `;
+                    return;
+                }
+
+                devicesGrid.innerHTML = '';
+                
+                filteredDevices.forEach(device => {
+                    const deviceCard = document.createElement('div');
+                    deviceCard.className = 'device-card';
+                    deviceCard.innerHTML = `
+                        <div class="device-icon">${device.icon}</div>
+                        <div class="device-name">${device.name}</div>
+                        <div class="device-state ${this.getStateClass(device.state, device.type)}">
+                            ${this.getStateText(device.state, device.type)}
+                        </div>
+                    `;
+                    
+                    deviceCard.addEventListener('click', () => {
+                        this.toggleDevice(device);
+                    });
+                    
+                    // Mobile touch feedback
+                    deviceCard.addEventListener('touchstart', function(e) {
+                        this.style.transform = 'scale(0.95)';
+                    });
+                    
+                    deviceCard.addEventListener('touchend', function(e) {
+                        this.style.transform = 'scale(1)';
+                    });
+                    
+                    devicesGrid.appendChild(deviceCard);
+                });
+                
+                if (this.isConnected) {
+                    connectionStatus.innerHTML = '✅ Connected to 3 Digital';
+                    connectionStatus.style.background = 'rgba(76, 175, 80, 0.3)';
+                } else {
+                    connectionStatus.innerHTML = '⚠️ Demo Mode - Connect to 3 Digital for real control';
+                    connectionStatus.style.background = 'rgba(255, 193, 7, 0.3)';
+                }
+            }
+
+            getStateText(state, type) {
+                if (type === 'sensor') {
+                    return state;
+                }
+                if (type === 'cover' || type === 'binary_sensor') {
+                    return state === 'open' ? 'OPEN' : 'CLOSED';
+                }
+                return state === 'on' ? 'ON' : 'OFF';
+            }
+
+            getStateClass(state, type) {
+                if (type === 'cover' || type === 'binary_sensor') {
+                    return state === 'open' ? 'status-open' : 'status-closed';
+                }
+                return state === 'on' ? 'status-on' : 'status-off';
+            }
+
+            async toggleDevice(device) {
+                if (!this.isConnected) {
+                    // Demo mode
+                    if (device.type === 'cover' || device.type === 'binary_sensor') {
+                        device.state = device.state === 'open' ? 'closed' : 'open';
+                    } else {
+                        device.state = device.state === 'on' ? 'off' : 'on';
+                    }
+                    this.renderDevices();
+                    return;
+                }
+
+                try {
+                    let service, domain = device.type;
+                    
+                    if (domain === 'light' || domain === 'switch') {
+                        service = device.state === 'on' ? 'turn_off' : 'turn_on';
+                    } else if (domain === 'cover') {
+                        service = device.state === 'open' ? 'close_cover' : 'open_cover';
+                    } else {
+                        this.showError(`Device type ${domain} not supported`);
+                        return;
+                    }
+
+                    const response = await fetch(`${this.haBaseUrl}/api/services/${domain}/${service}`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${this.haToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ entity_id: device.entity_id })
+                    });
+
+                    if (response.ok) {
+                        setTimeout(() => this.loadDevices(), 1000);
+                    }
+                } catch (error) {
+                    this.showError(`Failed to control ${device.name}`);
+                }
+            }
+
+            setupAutoRefresh() {
+                setInterval(() => {
+                    if (this.isConnected) {
+                        this.loadDevices().then(() => {
+                            this.renderDevices();
+                        });
+                    }
+                }, 30000);
+            }
+
+            showError(message) {
+                const status = document.getElementById('connection-status');
+                status.innerHTML = `❌ ${message}`;
+                status.style.background = 'rgba(244, 67, 54, 0.3)';
+                
+                setTimeout(() => {
+                    if (this.isConnected) {
+                        status.innerHTML = '✅ Connected to 3 Digital';
+                        status.style.background = 'rgba(76, 175, 80, 0.3)';
+                    } else {
+                        status.innerHTML = '⚠️ Demo Mode - Connect to 3 Digital for real control';
+                        status.style.background = 'rgba(255, 193, 7, 0.3)';
+                    }
+                }, 3000);
+            }
+
+            async fetchFromHA() {
+                try {
+                    const response = await fetch(`${this.haBaseUrl}/api/states`, {
+                        headers: {
+                            'Authorization': `Bearer ${this.haToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (!response.ok) throw new Error('Connection failed');
+                    const states = await response.json();
+                    
+                    return states.map(state => {
+                        const area = this.findAreaFromEntityId(state.entity_id);
+                        return {
+                            id: state.entity_id,
+                            name: state.attributes.friendly_name || this.formatEntityId(state.entity_id),
+                            icon: this.getDeviceIcon(state.entity_id),
+                            type: state.entity_id.split('.')[0],
+                            state: state.state,
+                            entity_id: state.entity_id,
+                            area: area
+                        };
+                    });
+                } catch (error) {
+                    return null;
+                }
+            }
+
+            findAreaFromEntityId(entityId) {
+                const entity = entityId.toLowerCase();
+                if (entity.includes('living')) return 'living_room';
+                if (entity.includes('bedroom')) return 'bedroom';
+                if (entity.includes('kitchen')) return 'kitchen';
+                if (entity.includes('garage')) return 'garage';
+                if (entity.includes('garden')) return 'garden';
+                return 'living_room';
+            }
+
+            formatEntityId(entityId) {
+                const parts = entityId.split('.');
+                const deviceName = parts[1].replace(/_/g, ' ');
+                return deviceName.charAt(0).toUpperCase() + deviceName.slice(1);
+            }
+
+            getDeviceIcon(entityId) {
+                const iconMap = {
+                    'light.': '💡', 'switch.': '🔌', 'sensor.temperature': '🌡️',
+                    'climate.': '❄️', 'cover.': '🪟', 'binary_sensor.door': '🚪'
+                };
+                for (const [prefix, icon] of Object.entries(iconMap)) {
+                    if (entityId.startsWith(prefix)) return icon;
+                }
+                return '⚙️';
+            }
+        }
+
+        // Start the application
+        document.addEventListener('DOMContentLoaded', function() {
+            new SmartHomeApp().init();
+        });
+
+        // PWA Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                    .then(registration => console.log('SW registered'))
+                    .catch(error => console.log('SW error:', error));
+            });
+        }
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+        });
+    </script>
+</body>
+</html>
