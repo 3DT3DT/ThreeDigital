@@ -2,13 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Home System - Areas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Smart 3 Digital System</title>
     
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#764ba2">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="3Digital">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="3Digital">
     
     <style>
         * {
@@ -18,37 +22,53 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             min-height: 100vh;
             padding: 20px;
+            position: fixed;
+            width: 100%;
+            height: 100%;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
         }
 
         .header {
             text-align: center;
-            padding: 30px 20px;
+            padding: 20px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 20px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             backdrop-filter: blur(10px);
         }
 
         .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+            font-size: 2em;
+            margin-bottom: 5px;
         }
 
-        /* Areas Tabs Styling */
+        /* Areas Tabs */
         .areas-tabs {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 8px;
+            margin-bottom: 15px;
             flex-wrap: wrap;
             justify-content: center;
         }
@@ -57,11 +77,12 @@
             background: rgba(255, 255, 255, 0.15);
             border: none;
             color: white;
-            padding: 12px 20px;
-            border-radius: 25px;
+            padding: 10px 15px;
+            border-radius: 20px;
             cursor: pointer;
             transition: all 0.3s ease;
             backdrop-filter: blur(10px);
+            font-size: 14px;
         }
 
         .area-tab.active {
@@ -73,18 +94,34 @@
             background: rgba(255, 255, 255, 0.25);
         }
 
+        /* Area Title */
+        .area-title {
+            text-align: center;
+            margin: 10px 0;
+            font-size: 1.3em;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            border-radius: 15px;
+        }
+
         /* Devices Grid */
+        .devices-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+
         .controls-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
         }
 
         .device-card {
             background: rgba(255, 255, 255, 0.15);
             border-radius: 15px;
-            padding: 25px 15px;
+            padding: 20px 10px;
             text-align: center;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -93,23 +130,23 @@
         }
 
         .device-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-3px);
             background: rgba(255, 255, 255, 0.25);
         }
 
         .device-icon {
-            font-size: 3em;
-            margin-bottom: 15px;
+            font-size: 2.5em;
+            margin-bottom: 10px;
         }
 
         .device-name {
-            font-size: 1.2em;
+            font-size: 1em;
             font-weight: bold;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .device-state {
-            font-size: 0.9em;
+            font-size: 0.85em;
             opacity: 0.9;
         }
 
@@ -135,42 +172,42 @@
 
         .connection-status {
             text-align: center;
-            padding: 15px;
+            padding: 12px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
-            margin-top: 20px;
+            margin-top: 10px;
         }
 
         .loading {
             text-align: center;
-            padding: 40px;
-            font-size: 1.2em;
+            padding: 30px;
+            font-size: 1.1em;
         }
 
-        .area-title {
-            text-align: center;
-            margin: 20px 0;
-            font-size: 1.5em;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 15px;
-            border-radius: 15px;
-        }
-
+        /* Mobile Optimization */
         @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+            
+            .header {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.7em;
+            }
+            
             .controls-grid {
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
                 gap: 10px;
             }
             
             .device-card {
-                padding: 20px 10px;
+                padding: 15px 8px;
             }
             
             .device-icon {
-                font-size: 2.5em;
-            }
-            
-            .header h1 {
                 font-size: 2em;
             }
             
@@ -179,17 +216,38 @@
             }
             
             .area-tab {
-                padding: 10px 15px;
-                font-size: 14px;
+                padding: 8px 12px;
+                font-size: 12px;
             }
+        }
+
+        @media (max-width: 480px) {
+            .controls-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Scrollbar */
+        .devices-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .devices-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .devices-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🏠 Smart Home System</h1>
-            <p>Control different areas of your home</p>
+            <h1>🏠 Smart 3 Digital System</h1>
+            <p>Control your home devices</p>
         </div>
 
         <!-- Areas Tabs -->
@@ -199,12 +257,14 @@
 
         <!-- Current Area Title -->
         <div class="area-title" id="area-title">
-            🔄 Loading...
+            🏠 All Areas
         </div>
 
         <!-- Devices Grid -->
-        <div class="controls-grid" id="devices-grid">
-            <div class="loading">🔄 Loading devices...</div>
+        <div class="devices-container">
+            <div class="controls-grid" id="devices-grid">
+                <div class="loading">🔄 Loading devices...</div>
+            </div>
         </div>
 
         <div class="connection-status" id="connection-status">
@@ -251,174 +311,43 @@
                 }
             }
 
-            // Organize devices into areas
             setupAreas() {
                 this.areas = [
-                    {
-                        id: 'all',
-                        name: '🏠 All Areas',
-                        icon: '🏠'
-                    },
-                    {
-                        id: 'living_room',
-                        name: '🛋️ Living Room',
-                        icon: '🛋️'
-                    },
-                    {
-                        id: 'bedroom',
-                        name: '🛏️ Bedroom',
-                        icon: '🛏️'
-                    },
-                    {
-                        id: 'kitchen',
-                        name: '👨‍🍳 Kitchen',
-                        icon: '👨‍🍳'
-                    },
-                    {
-                        id: 'garage',
-                        name: '🚗 Garage',
-                        icon: '🚗'
-                    },
-                    {
-                        id: 'garden',
-                        name: '🌳 Garden',
-                        icon: '🌳'
-                    }
+                    { id: 'all', name: '🏠 All Areas', icon: '🏠' },
+                    { id: 'living_room', name: '🛋️ Living Room', icon: '🛋️' },
+                    { id: 'bedroom', name: '🛏️ Bedroom', icon: '🛏️' },
+                    { id: 'kitchen', name: '👨‍🍳 Kitchen', icon: '👨‍🍳' },
+                    { id: 'garage', name: '🚗 Garage', icon: '🚗' },
+                    { id: 'garden', name: '🌳 Garden', icon: '🌳' }
                 ];
             }
 
             getMockDevices() {
                 return [
-                    // Living Room Devices
-                    {
-                        id: 'light_living_room',
-                        name: 'Living Room Light',
-                        icon: '💡',
-                        type: 'light',
-                        state: 'off',
-                        entity_id: 'light.living_room',
-                        area: 'living_room'
-                    },
-                    {
-                        id: 'tv_living_room',
-                        name: 'TV',
-                        icon: '📺',
-                        type: 'switch',
-                        state: 'off',
-                        entity_id: 'switch.tv',
-                        area: 'living_room'
-                    },
-                    {
-                        id: 'curtains_living_room',
-                        name: 'Living Room Curtains',
-                        icon: '🪟',
-                        type: 'cover',
-                        state: 'closed',
-                        entity_id: 'cover.living_room_curtains',
-                        area: 'living_room'
-                    },
+                    // Living Room
+                    { id: 'light_living_room', name: 'Living Room Light', icon: '💡', type: 'light', state: 'off', entity_id: 'light.living_room', area: 'living_room' },
+                    { id: 'tv_living_room', name: 'TV', icon: '📺', type: 'switch', state: 'off', entity_id: 'switch.tv', area: 'living_room' },
+                    { id: 'curtains_living_room', name: 'Curtains', icon: '🪟', type: 'cover', state: 'closed', entity_id: 'cover.living_room_curtains', area: 'living_room' },
 
-                    // Bedroom Devices
-                    {
-                        id: 'light_bedroom',
-                        name: 'Bedroom Light',
-                        icon: '💡',
-                        type: 'light',
-                        state: 'on',
-                        entity_id: 'light.bedroom',
-                        area: 'bedroom'
-                    },
-                    {
-                        id: 'ac_bedroom',
-                        name: 'Bedroom AC',
-                        icon: '❄️',
-                        type: 'climate',
-                        state: 'off',
-                        entity_id: 'climate.bedroom_ac',
-                        area: 'bedroom'
-                    },
-                    {
-                        id: 'curtains_bedroom',
-                        name: 'Bedroom Curtains',
-                        icon: '🛏️',
-                        type: 'cover',
-                        state: 'open',
-                        entity_id: 'cover.bedroom_curtains',
-                        area: 'bedroom'
-                    },
+                    // Bedroom
+                    { id: 'light_bedroom', name: 'Bedroom Light', icon: '💡', type: 'light', state: 'on', entity_id: 'light.bedroom', area: 'bedroom' },
+                    { id: 'ac_bedroom', name: 'AC', icon: '❄️', type: 'climate', state: 'off', entity_id: 'climate.bedroom_ac', area: 'bedroom' },
+                    { id: 'curtains_bedroom', name: 'Curtains', icon: '🛏️', type: 'cover', state: 'open', entity_id: 'cover.bedroom_curtains', area: 'bedroom' },
 
-                    // Kitchen Devices
-                    {
-                        id: 'light_kitchen',
-                        name: 'Kitchen Light',
-                        icon: '💡',
-                        type: 'light',
-                        state: 'off',
-                        entity_id: 'light.kitchen',
-                        area: 'kitchen'
-                    },
-                    {
-                        id: 'oven_kitchen',
-                        name: 'Oven',
-                        icon: '🔥',
-                        type: 'switch',
-                        state: 'off',
-                        entity_id: 'switch.oven',
-                        area: 'kitchen'
-                    },
-                    {
-                        id: 'refrigerator_kitchen',
-                        name: 'Refrigerator',
-                        icon: '🧊',
-                        type: 'sensor',
-                        state: '4°C',
-                        entity_id: 'sensor.refrigerator_temp',
-                        area: 'kitchen'
-                    },
+                    // Kitchen
+                    { id: 'light_kitchen', name: 'Kitchen Light', icon: '💡', type: 'light', state: 'off', entity_id: 'light.kitchen', area: 'kitchen' },
+                    { id: 'oven_kitchen', name: 'Oven', icon: '🔥', type: 'switch', state: 'off', entity_id: 'switch.oven', area: 'kitchen' },
 
-                    // Garage Devices
-                    {
-                        id: 'garage_door_main',
-                        name: 'Garage Door',
-                        icon: '🚗',
-                        type: 'cover',
-                        state: 'closed',
-                        entity_id: 'cover.garage_door',
-                        area: 'garage'
-                    },
-                    {
-                        id: 'light_garage',
-                        name: 'Garage Light',
-                        icon: '💡',
-                        type: 'light',
-                        state: 'off',
-                        entity_id: 'light.garage',
-                        area: 'garage'
-                    },
+                    // Garage
+                    { id: 'garage_door', name: 'Garage Door', icon: '🚗', type: 'cover', state: 'closed', entity_id: 'cover.garage_door', area: 'garage' },
+                    { id: 'light_garage', name: 'Garage Light', icon: '💡', type: 'light', state: 'off', entity_id: 'light.garage', area: 'garage' },
 
-                    // Garden Devices
-                    {
-                        id: 'garden_lights',
-                        name: 'Garden Lights',
-                        icon: '💡',
-                        type: 'light',
-                        state: 'off',
-                        entity_id: 'light.garden',
-                        area: 'garden'
-                    },
-                    {
-                        id: 'sprinkler_garden',
-                        name: 'Sprinkler System',
-                        icon: '💧',
-                        type: 'switch',
-                        state: 'off',
-                        entity_id: 'switch.sprinkler',
-                        area: 'garden'
-                    }
+                    // Garden
+                    { id: 'garden_lights', name: 'Garden Lights', icon: '💡', type: 'light', state: 'off', entity_id: 'light.garden', area: 'garden' },
+                    { id: 'sprinkler', name: 'Sprinkler', icon: '💧', type: 'switch', state: 'off', entity_id: 'switch.sprinkler', area: 'garden' }
                 ];
             }
 
-            // Display area tabs
             renderAreas() {
                 const areasTabs = document.getElementById('areas-tabs');
                 areasTabs.innerHTML = '';
@@ -430,23 +359,30 @@
                     areaTab.addEventListener('click', () => {
                         this.switchArea(area.id);
                     });
+                    
+                    // Mobile touch events
+                    areaTab.addEventListener('touchstart', function(e) {
+                        this.style.transform = 'scale(0.95)';
+                    });
+                    
+                    areaTab.addEventListener('touchend', function(e) {
+                        this.style.transform = 'scale(1)';
+                    });
+                    
                     areasTabs.appendChild(areaTab);
                 });
             }
 
-            // Switch between areas
             switchArea(areaId) {
                 this.currentArea = areaId;
                 this.renderAreas();
                 this.renderDevices();
                 
-                // Update area title
                 const currentArea = this.areas.find(a => a.id === areaId);
                 document.getElementById('area-title').innerHTML = 
                     `${currentArea.icon} ${currentArea.name}`;
             }
 
-            // Display devices for current area
             renderDevices() {
                 const devicesGrid = document.getElementById('devices-grid');
                 const connectionStatus = document.getElementById('connection-status');
@@ -485,14 +421,23 @@
                         this.toggleDevice(device);
                     });
                     
+                    // Mobile touch feedback
+                    deviceCard.addEventListener('touchstart', function(e) {
+                        this.style.transform = 'scale(0.95)';
+                    });
+                    
+                    deviceCard.addEventListener('touchend', function(e) {
+                        this.style.transform = 'scale(1)';
+                    });
+                    
                     devicesGrid.appendChild(deviceCard);
                 });
                 
                 if (this.isConnected) {
-                    connectionStatus.innerHTML = '✅ Connected to Home Assistant';
+                    connectionStatus.innerHTML = '✅ Connected to 3 Digital';
                     connectionStatus.style.background = 'rgba(76, 175, 80, 0.3)';
                 } else {
-                    connectionStatus.innerHTML = '⚠️ Using demo data - Connect to Home Assistant for real control';
+                    connectionStatus.innerHTML = '⚠️ Demo Mode - Connect to 3 Digital for real control';
                     connectionStatus.style.background = 'rgba(255, 193, 7, 0.3)';
                 }
             }
@@ -516,13 +461,10 @@
 
             async toggleDevice(device) {
                 if (!this.isConnected) {
+                    // Demo mode
                     if (device.type === 'cover' || device.type === 'binary_sensor') {
-                        const newState = device.state === 'open' ? 'closed' : 'open';
-                        const action = device.state === 'open' ? 'Closing' : 'Opening';
-                        alert(`${action} ${device.name}\n\nDemo Mode - Connect to Home Assistant for real control`);
-                        device.state = newState;
+                        device.state = device.state === 'open' ? 'closed' : 'open';
                     } else {
-                        alert(`Controlling ${device.name}\n\nDemo Mode - Connect to Home Assistant for real control`);
                         device.state = device.state === 'on' ? 'off' : 'on';
                     }
                     this.renderDevices();
@@ -537,7 +479,7 @@
                     } else if (domain === 'cover') {
                         service = device.state === 'open' ? 'close_cover' : 'open_cover';
                     } else {
-                        alert(`Device type ${domain} not supported for control`);
+                        this.showError(`Device type ${domain} not supported`);
                         return;
                     }
 
@@ -572,30 +514,32 @@
                 const status = document.getElementById('connection-status');
                 status.innerHTML = `❌ ${message}`;
                 status.style.background = 'rgba(244, 67, 54, 0.3)';
+                
+                setTimeout(() => {
+                    if (this.isConnected) {
+                        status.innerHTML = '✅ Connected to 3 Digital';
+                        status.style.background = 'rgba(76, 175, 80, 0.3)';
+                    } else {
+                        status.innerHTML = '⚠️ Demo Mode - Connect to 3 Digital for real control';
+                        status.style.background = 'rgba(255, 193, 7, 0.3)';
+                    }
+                }, 3000);
             }
 
             async fetchFromHA() {
                 try {
-                    console.log('🔗 Connecting to Home Assistant...');
-                    
                     const response = await fetch(`${this.haBaseUrl}/api/states`, {
-                        method: 'GET',
                         headers: {
                             'Authorization': `Bearer ${this.haToken}`,
                             'Content-Type': 'application/json'
                         }
                     });
                     
-                    if (!response.ok) {
-                        throw new Error(`Connection error: ${response.status}`);
-                    }
-                    
+                    if (!response.ok) throw new Error('Connection failed');
                     const states = await response.json();
-                    console.log('✅ Data loaded successfully:', states.length + ' devices');
                     
                     return states.map(state => {
                         const area = this.findAreaFromEntityId(state.entity_id);
-                        
                         return {
                             id: state.entity_id,
                             name: state.attributes.friendly_name || this.formatEntityId(state.entity_id),
@@ -606,56 +550,34 @@
                             area: area
                         };
                     });
-                    
                 } catch (error) {
-                    console.error('❌ Failed to connect to Home Assistant:', error);
                     return null;
                 }
             }
 
             findAreaFromEntityId(entityId) {
                 const entity = entityId.toLowerCase();
-                
-                if (entity.includes('living') || entity.includes('salon')) {
-                    return 'living_room';
-                } else if (entity.includes('bedroom')) {
-                    return 'bedroom';
-                } else if (entity.includes('kitchen')) {
-                    return 'kitchen';
-                } else if (entity.includes('garage')) {
-                    return 'garage';
-                } else if (entity.includes('garden')) {
-                    return 'garden';
-                } else {
-                    return 'living_room';
-                }
+                if (entity.includes('living')) return 'living_room';
+                if (entity.includes('bedroom')) return 'bedroom';
+                if (entity.includes('kitchen')) return 'kitchen';
+                if (entity.includes('garage')) return 'garage';
+                if (entity.includes('garden')) return 'garden';
+                return 'living_room';
             }
 
             formatEntityId(entityId) {
                 const parts = entityId.split('.');
-                const deviceType = parts[0];
                 const deviceName = parts[1].replace(/_/g, ' ');
-                return `${deviceName} (${deviceType})`;
+                return deviceName.charAt(0).toUpperCase() + deviceName.slice(1);
             }
 
             getDeviceIcon(entityId) {
                 const iconMap = {
-                    'light.': '💡',
-                    'switch.': '🔌',
-                    'sensor.temperature': '🌡️',
-                    'sensor.humidity': '💧',
-                    'climate.': '❄️',
-                    'cover.garage': '🚗',
-                    'cover.': '🪟',
-                    'binary_sensor.door': '🚪',
-                    'binary_sensor.window': '🪟',
-                    'binary_sensor.motion': '👁️'
+                    'light.': '💡', 'switch.': '🔌', 'sensor.temperature': '🌡️',
+                    'climate.': '❄️', 'cover.': '🪟', 'binary_sensor.door': '🚪'
                 };
-
                 for (const [prefix, icon] of Object.entries(iconMap)) {
-                    if (entityId.startsWith(prefix)) {
-                        return icon;
-                    }
+                    if (entityId.startsWith(prefix)) return icon;
                 }
                 return '⚙️';
             }
@@ -663,18 +585,24 @@
 
         // Start the application
         document.addEventListener('DOMContentLoaded', function() {
-            const app = new SmartHomeApp();
-            app.init();
+            new SmartHomeApp().init();
         });
 
-        // PWA Installation
+        // PWA Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
+                navigator.serviceWorker.register('/sw.js', { scope: '/' })
                     .then(registration => console.log('SW registered'))
                     .catch(error => console.log('SW error:', error));
             });
         }
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+        });
     </script>
 </body>
 </html>
