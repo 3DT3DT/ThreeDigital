@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Home System - Areas</title>
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#764ba2">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        /* Areas Tabs Styling */
+        .areas-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .area-tab {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .area-tab.active {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .area-tab:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        /* Devices Grid */
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .device-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 25px 15px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .device-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .device-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .device-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .device-state {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .status-on {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .status-off {
+            color: #f44336;
+            font-weight: bold;
+        }
+
+        .status-open {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .status-closed {
+            color: #f44336;
+            font-weight: bold;
+        }
+
+        .connection-status {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+        }
+
+        .area-title {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 1.5em;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .controls-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 10px;
+            }
+            
+            .device-card {
+                padding: 20px 10px;
+            }
+            
+            .device-icon {
+                font-size: 2.5em;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .areas-tabs {
+                gap: 5px;
+            }
+            
+            .area-tab {
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 Smart Home System</h1>
+            <p>Control different areas of your home</p>
+        </div>
+
+        <!-- Areas Tabs -->
+        <div class="areas-tabs" id="areas-tabs">
+            <!-- Areas will be added automatically -->
+        </div>
+
+        <!-- Current Area Title -->
+        <div class="area-title" id="area-title">
+            🔄 Loading...
+        </div>
+
+        <!-- Devices Grid -->
+        <div class="controls-grid" id="devices-grid">
+            <div class="loading">🔄 Loading devices...</div>
+        </div>
+
+        <div class="connection-status" id="connection-status">
+            🔄 Connecting to system...
+        </div>
+    </div>
+
+    <script>
+        class SmartHomeApp {
+            constructor() {
+                this.haBaseUrl = 'http://YOUR_HA_IP:8123';
+                this.haToken = 'YOUR_LONG_LIVED_TOKEN';
+                this.devices = [];
+                this.areas = [];
+                this.currentArea = 'all';
+                this.isConnected = false;
+            }
+
+            async init() {
+                try {
+                    await this.loadDevices();
+                    this.setupAreas();
+                    this.renderAreas();
+                    this.renderDevices();
+                    this.setupAutoRefresh();
+                } catch (error) {
+                    console.error('Initialization error:', error);
+                    this.showError('Failed to initialize system');
+                }
+            }
+
+            async loadDevices() {
+                try {
+                    const realDevices = await this.fetchFromHA();
+                    if (realDevices && realDevices.length > 0) {
+                        this.devices = realDevices;
+                        this.isConnected = true;
+                    } else {
+                        this.devices = this.getMockDevices();
+                        this.isConnected = false;
+                    }
+                } catch (error) {
+                    this.devices = this.getMockDevices();
+                }
+            }
+
+            // Organize devices into areas
+            setupAreas() {
+                this.areas = [
+                    {
+                        id: 'all',
+                        name: '🏠 All Areas',
+                        icon: '🏠'
+                    },
+                    {
+                        id: 'living_room',
+                        name: '🛋️ Living Room',
+                        icon: '🛋️'
+                    },
+                    {
+                        id: 'bedroom',
+                        name: '🛏️ Bedroom',
+                        icon: '🛏️'
+                    },
+                    {
+                        id: 'kitchen',
+                        name: '👨‍🍳 Kitchen',
+                        icon: '👨‍🍳'
+                    },
+                    {
+                        id: 'garage',
+                        name: '🚗 Garage',
+                        icon: '🚗'
+                    },
+                    {
+                        id: 'garden',
+                        name: '🌳 Garden',
+                        icon: '🌳'
+                    }
+                ];
+            }
+
+            getMockDevices() {
+                return [
+                    // Living Room Devices
+                    {
+                        id: 'light_living_room',
+                        name: 'Living Room Light',
+                        icon: '💡',
+                        type: 'light',
+                        state: 'off',
+                        entity_id: 'light.living_room',
+                        area: 'living_room'
+                    },
+                    {
+                        id: 'tv_living_room',
+                        name: 'TV',
+                        icon: '📺',
+                        type: 'switch',
+                        state: 'off',
+                        entity_id: 'switch.tv',
+                        area: 'living_room'
+                    },
+                    {
+                        id: 'curtains_living_room',
+                        name: 'Living Room Curtains',
+                        icon: '🪟',
+                        type: 'cover',
+                        state: 'closed',
+                        entity_id: 'cover.living_room_curtains',
+                        area: 'living_room'
+                    },
+
+                    // Bedroom Devices
+                    {
+                        id: 'light_bedroom',
+                        name: 'Bedroom Light',
+                        icon: '💡',
+                        type: 'light',
+                        state: 'on',
+                        entity_id: 'light.bedroom',
+                        area: 'bedroom'
+                    },
+                    {
+                        id: 'ac_bedroom',
+                        name: 'Bedroom AC',
+                        icon: '❄️',
+                        type: 'climate',
+                        state: 'off',
+                        entity_id: 'climate.bedroom_ac',
+                        area: 'bedroom'
+                    },
+                    {
+                        id: 'curtains_bedroom',
+                        name: 'Bedroom Curtains',
+                        icon: '🛏️',
+                        type: 'cover',
+                        state: 'open',
+                        entity_id: 'cover.bedroom_curtains',
+                        area: 'bedroom'
+                    },
+
+                    // Kitchen Devices
+                    {
+                        id: 'light_kitchen',
+                        name: 'Kitchen Light',
+                        icon: '💡',
+                        type: 'light',
+                        state: 'off',
+                        entity_id: 'light.kitchen',
+                        area: 'kitchen'
+                    },
+                    {
+                        id: 'oven_kitchen',
+                        name: 'Oven',
+                        icon: '🔥',
+                        type: 'switch',
+                        state: 'off',
+                        entity_id: 'switch.oven',
+                        area: 'kitchen'
+                    },
+                    {
+                        id: 'refrigerator_kitchen',
+                        name: 'Refrigerator',
+                        icon: '🧊',
+                        type: 'sensor',
+                        state: '4°C',
+                        entity_id: 'sensor.refrigerator_temp',
+                        area: 'kitchen'
+                    },
+
+                    // Garage Devices
+                    {
+                        id: 'garage_door_main',
+                        name: 'Garage Door',
+                        icon: '🚗',
+                        type: 'cover',
+                        state: 'closed',
+                        entity_id: 'cover.garage_door',
+                        area: 'garage'
+                    },
+                    {
+                        id: 'light_garage',
+                        name: 'Garage Light',
+                        icon: '💡',
+                        type: 'light',
+                        state: 'off',
+                        entity_id: 'light.garage',
+                        area: 'garage'
+                    },
+
+                    // Garden Devices
+                    {
+                        id: 'garden_lights',
+                        name: 'Garden Lights',
+                        icon: '💡',
+                        type: 'light',
+                        state: 'off',
+                        entity_id: 'light.garden',
+                        area: 'garden'
+                    },
+                    {
+                        id: 'sprinkler_garden',
+                        name: 'Sprinkler System',
+                        icon: '💧',
+                        type: 'switch',
+                        state: 'off',
+                        entity_id: 'switch.sprinkler',
+                        area: 'garden'
+                    }
+                ];
+            }
+
+            // Display area tabs
+            renderAreas() {
+                const areasTabs = document.getElementById('areas-tabs');
+                areasTabs.innerHTML = '';
+
+                this.areas.forEach(area => {
+                    const areaTab = document.createElement('button');
+                    areaTab.className = `area-tab ${this.currentArea === area.id ? 'active' : ''}`;
+                    areaTab.innerHTML = area.name;
+                    areaTab.addEventListener('click', () => {
+                        this.switchArea(area.id);
+                    });
+                    areasTabs.appendChild(areaTab);
+                });
+            }
+
+            // Switch between areas
+            switchArea(areaId) {
+                this.currentArea = areaId;
+                this.renderAreas();
+                this.renderDevices();
+                
+                // Update area title
+                const currentArea = this.areas.find(a => a.id === areaId);
+                document.getElementById('area-title').innerHTML = 
+                    `${currentArea.icon} ${currentArea.name}`;
+            }
+
+            // Display devices for current area
+            renderDevices() {
+                const devicesGrid = document.getElementById('devices-grid');
+                const connectionStatus = document.getElementById('connection-status');
+                
+                let filteredDevices = this.devices;
+                
+                if (this.currentArea !== 'all') {
+                    filteredDevices = this.devices.filter(device => 
+                        device.area === this.currentArea
+                    );
+                }
+
+                if (filteredDevices.length === 0) {
+                    devicesGrid.innerHTML = `
+                        <div class="loading" style="grid-column: 1 / -1;">
+                            ⚠️ No devices in this area
+                        </div>
+                    `;
+                    return;
+                }
+
+                devicesGrid.innerHTML = '';
+                
+                filteredDevices.forEach(device => {
+                    const deviceCard = document.createElement('div');
+                    deviceCard.className = 'device-card';
+                    deviceCard.innerHTML = `
+                        <div class="device-icon">${device.icon}</div>
+                        <div class="device-name">${device.name}</div>
+                        <div class="device-state ${this.getStateClass(device.state, device.type)}">
+                            ${this.getStateText(device.state, device.type)}
+                        </div>
+                    `;
+                    
+                    deviceCard.addEventListener('click', () => {
+                        this.toggleDevice(device);
+                    });
+                    
+                    devicesGrid.appendChild(deviceCard);
+                });
+                
+                if (this.isConnected) {
+                    connectionStatus.innerHTML = '✅ Connected to Home Assistant';
+                    connectionStatus.style.background = 'rgba(76, 175, 80, 0.3)';
+                } else {
+                    connectionStatus.innerHTML = '⚠️ Using demo data - Connect to Home Assistant for real control';
+                    connectionStatus.style.background = 'rgba(255, 193, 7, 0.3)';
+                }
+            }
+
+            getStateText(state, type) {
+                if (type === 'sensor') {
+                    return state;
+                }
+                if (type === 'cover' || type === 'binary_sensor') {
+                    return state === 'open' ? 'OPEN' : 'CLOSED';
+                }
+                return state === 'on' ? 'ON' : 'OFF';
+            }
+
+            getStateClass(state, type) {
+                if (type === 'cover' || type === 'binary_sensor') {
+                    return state === 'open' ? 'status-open' : 'status-closed';
+                }
+                return state === 'on' ? 'status-on' : 'status-off';
+            }
+
+            async toggleDevice(device) {
+                if (!this.isConnected) {
+                    if (device.type === 'cover' || device.type === 'binary_sensor') {
+                        const newState = device.state === 'open' ? 'closed' : 'open';
+                        const action = device.state === 'open' ? 'Closing' : 'Opening';
+                        alert(`${action} ${device.name}\n\nDemo Mode - Connect to Home Assistant for real control`);
+                        device.state = newState;
+                    } else {
+                        alert(`Controlling ${device.name}\n\nDemo Mode - Connect to Home Assistant for real control`);
+                        device.state = device.state === 'on' ? 'off' : 'on';
+                    }
+                    this.renderDevices();
+                    return;
+                }
+
+                try {
+                    let service, domain = device.type;
+                    
+                    if (domain === 'light' || domain === 'switch') {
+                        service = device.state === 'on' ? 'turn_off' : 'turn_on';
+                    } else if (domain === 'cover') {
+                        service = device.state === 'open' ? 'close_cover' : 'open_cover';
+                    } else {
+                        alert(`Device type ${domain} not supported for control`);
+                        return;
+                    }
+
+                    const response = await fetch(`${this.haBaseUrl}/api/services/${domain}/${service}`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${this.haToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ entity_id: device.entity_id })
+                    });
+
+                    if (response.ok) {
+                        setTimeout(() => this.loadDevices(), 1000);
+                    }
+                } catch (error) {
+                    this.showError(`Failed to control ${device.name}`);
+                }
+            }
+
+            setupAutoRefresh() {
+                setInterval(() => {
+                    if (this.isConnected) {
+                        this.loadDevices().then(() => {
+                            this.renderDevices();
+                        });
+                    }
+                }, 30000);
+            }
+
+            showError(message) {
+                const status = document.getElementById('connection-status');
+                status.innerHTML = `❌ ${message}`;
+                status.style.background = 'rgba(244, 67, 54, 0.3)';
+            }
+
+            async fetchFromHA() {
+                try {
+                    console.log('🔗 Connecting to Home Assistant...');
+                    
+                    const response = await fetch(`${this.haBaseUrl}/api/states`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${this.haToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Connection error: ${response.status}`);
+                    }
+                    
+                    const states = await response.json();
+                    console.log('✅ Data loaded successfully:', states.length + ' devices');
+                    
+                    return states.map(state => {
+                        const area = this.findAreaFromEntityId(state.entity_id);
+                        
+                        return {
+                            id: state.entity_id,
+                            name: state.attributes.friendly_name || this.formatEntityId(state.entity_id),
+                            icon: this.getDeviceIcon(state.entity_id),
+                            type: state.entity_id.split('.')[0],
+                            state: state.state,
+                            entity_id: state.entity_id,
+                            area: area
+                        };
+                    });
+                    
+                } catch (error) {
+                    console.error('❌ Failed to connect to Home Assistant:', error);
+                    return null;
+                }
+            }
+
+            findAreaFromEntityId(entityId) {
+                const entity = entityId.toLowerCase();
+                
+                if (entity.includes('living') || entity.includes('salon')) {
+                    return 'living_room';
+                } else if (entity.includes('bedroom')) {
+                    return 'bedroom';
+                } else if (entity.includes('kitchen')) {
+                    return 'kitchen';
+                } else if (entity.includes('garage')) {
+                    return 'garage';
+                } else if (entity.includes('garden')) {
+                    return 'garden';
+                } else {
+                    return 'living_room';
+                }
+            }
+
+            formatEntityId(entityId) {
+                const parts = entityId.split('.');
+                const deviceType = parts[0];
+                const deviceName = parts[1].replace(/_/g, ' ');
+                return `${deviceName} (${deviceType})`;
+            }
+
+            getDeviceIcon(entityId) {
+                const iconMap = {
+                    'light.': '💡',
+                    'switch.': '🔌',
+                    'sensor.temperature': '🌡️',
+                    'sensor.humidity': '💧',
+                    'climate.': '❄️',
+                    'cover.garage': '🚗',
+                    'cover.': '🪟',
+                    'binary_sensor.door': '🚪',
+                    'binary_sensor.window': '🪟',
+                    'binary_sensor.motion': '👁️'
+                };
+
+                for (const [prefix, icon] of Object.entries(iconMap)) {
+                    if (entityId.startsWith(prefix)) {
+                        return icon;
+                    }
+                }
+                return '⚙️';
+            }
+        }
+
+        // Start the application
+        document.addEventListener('DOMContentLoaded', function() {
+            const app = new SmartHomeApp();
+            app.init();
+        });
+
+        // PWA Installation
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => console.log('SW registered'))
+                    .catch(error => console.log('SW error:', error));
+            });
+        }
+    </script>
+</body>
+</html>
